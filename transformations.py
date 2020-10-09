@@ -65,8 +65,6 @@ def rotationA(theta, axis):
     s = np.sin(theta)
     c = np.cos(theta)
 
-    assert axis.shape == (3,)
-
     x = axis[0]
     y = axis[1]
     z = axis[2]

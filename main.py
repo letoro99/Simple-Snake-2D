@@ -9,7 +9,7 @@ from control import Controller
 
 if __name__ == '__main__':
     print(sys.argv)
-    n = int(sys.argv[1])
+    n = 10
 
     # Initialize glfw
     if not glfw.init():
@@ -31,10 +31,8 @@ if __name__ == '__main__':
     glfw.set_key_callback(window, controlador.on_key)
 
     # Assembling the shader program (pipeline) with both shaders
-    pipeline = es.SimpleTransformShaderProgram()
-
-    # Telling OpenGL to use our shader program
-    glUseProgram(pipeline.shaderProgram)
+    pipeline_color = es.SimpleTransformShaderProgram()
+    pipeline_texture = es.SimpleTextureTransformShaderProgram()
 
     # Setting up the clear screen color
     glClearColor(0.8, 1, 0.8, 1.0)
@@ -42,8 +40,8 @@ if __name__ == '__main__':
     # Our shapes here are always fully painted
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
-    fondo = Escenario(n)
-    snake = Snake(n)
+    fondo = Escenario(n,'img/game_over.png')
+    snake = Snake(n,'img/serpiente.png')
     manzana = CreadorApple(n)
 
     controlador.set_model(snake)
@@ -51,6 +49,7 @@ if __name__ == '__main__':
     controlador.set_dif(1/n)
     t0 = 0
     dt = 0
+    rot = 0
     vel = 0.1
 
 
@@ -73,11 +72,21 @@ if __name__ == '__main__':
         glClear(GL_COLOR_BUFFER_BIT)
 
         # Dibujamos
-        snake.draw(pipeline)
-        manzana.draw(pipeline)
-        fondo.draw(pipeline)
+        if snake.cabeza.vida == True:
+            fondo.draw(pipeline_color)
+            snake.draw(pipeline_color,pipeline_texture)
+            manzana.draw(pipeline_color)
 
-        # Once the render is done, buffers are swapped, showing only the complete scene.
-        glfw.swap_buffers(window)
+            # Once the render is done, buffers are swapped, showing only the complete scene.
+            glfw.swap_buffers(window)
+        
+        else:
+            glClearColor(0, 0, 0, 0)
+            if rot < (mt.pi/8):
+                fondo.update(rot)
+                rot += 0.0001
+            fondo.draw_go(pipeline_texture)
+             # Once the render is done, buffers are swapped, showing only the complete scene.
+            glfw.swap_buffers(window)
 
     glfw.terminate()

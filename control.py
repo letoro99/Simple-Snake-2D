@@ -30,24 +30,40 @@ class Controller:
             
         elif (key == glfw.KEY_LEFT or key == glfw.KEY_A) and action == glfw.PRESS:
             if self.model.jugando == False and self.model.dx != self.dif:
+                if self.model.dy < 0:
+                    self.model.theta += -1*(mt.pi/2)
+                else:
+                    self.model.theta += 1*(mt.pi/2)
                 self.model.jugando = True
                 self.model.dx = -1*self.dif
                 self.model.dy = 0
 
         elif (key == glfw.KEY_RIGHT or key == glfw.KEY_D) and action == glfw.PRESS:
             if self.model.jugando == False and self.model.dx != -1*self.dif:
+                if self.model.dy < 0:
+                    self.model.theta += 1*(mt.pi/2)
+                else:
+                    self.model.theta += -1*(mt.pi/2)
                 self.model.jugando = True
                 self.model.dx = self.dif
                 self.model.dy = 0
 
         elif (key == glfw.KEY_UP or key == glfw.KEY_W) and action == glfw.PRESS:
             if self.model.jugando == False and self.model.dy != -1*self.dif:
+                if self.model.dx < 0:
+                    self.model.theta += -1*(mt.pi/2)
+                else:
+                    self.model.theta += 1*(mt.pi/2)
                 self.model.dx = 0
                 self.model.dy = self.dif
                 self.model.jugando = True
 
         elif(key == glfw.KEY_DOWN or key == glfw.KEY_S) and action == glfw.PRESS:
             if self.model.jugando == False and self.model.dy != self.dif:
+                if self.model.dx < 0:
+                    self.model.theta += 1*(mt.pi/2)
+                else:
+                    self.model.theta += -1*(mt.pi/2)
                 self.model.dx = 0
                 self.model.dy = -1*self.dif
                 self.model.jugando = True

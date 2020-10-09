@@ -1,6 +1,6 @@
 # Modelos del Snake
 # Contiene :
-
+from OpenGL.GL import *
 import transformations as tr
 import basic_shapes as bs
 import scene_graph as sg
@@ -42,6 +42,7 @@ class Apple:
         self.pos_y = mt.trunc(rd.random()*rd.randint(-1,1)*10)/10
     
     def draw(self,pipeline):
+        glUseProgram(pipeline.shaderProgram)
         self.model.transform = tr.translate(self.pos_x,self.pos_y,0)
         sg.drawSceneGraphNode(self.model,pipeline,'transform')
 
@@ -71,10 +72,10 @@ class CreadorApple():
             print(self.fruta.pos_x,self.fruta.pos_y)
 
 class Cabeza:
-    def __init__(self,n):
+    def __init__(self,n,texture_head):
         self.n = n
         # basic figures
-        gpu_cabeza_quad = es.toGPUShape(bs.createColorCube(0,1,1))
+        gpu_cabeza_quad = es.toGPUShape(bs.createTextureQuad(texture_head),GL_REPEAT, GL_NEAREST)
 
         # cabeza
         cabeza = sg.SceneGraphNode('cabeza')
@@ -83,7 +84,7 @@ class Cabeza:
 
         # Ensamblamos 
         snake = sg.SceneGraphNode('snake')
-        snake.transform = tr.matmul([tr.uniformScale(1/self.n),tr.rotationX(90)])
+        snake.transform = tr.matmul([tr.rotationX(1),tr.scale(1/n,2/n,1),tr.rotationZ(mt.pi/2)])
         snake.childs += [cabeza]
 
         transform_snake = sg.SceneGraphNode('snakeTR')
@@ -93,13 +94,13 @@ class Cabeza:
         self.pos_x = 0
         self.pos_y = 0
         self.vida = True
-    
+
     def draw(self,pipeline):
+        glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(self.model,pipeline,'transform')
 
     def gameOver(self):
-        self.vida == False
-        glClearColor(1,0,0,1.0)
+        self.vida = False
 
     def colision(self,lista,snake,manzana):
         error = 0.00001
@@ -130,6 +131,7 @@ class Cuerpo:
         self.model = transform_cuerpo
 
     def draw(self,pipeline):
+        glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(self.model,pipeline,'transform')
 
     def posicionar(self,posx,posy):
@@ -137,19 +139,23 @@ class Cuerpo:
         self.model.transform = tr.translate(posx,posy,0)
 
 class Snake:
-    def __init__(self,n):
+    def __init__(self,n,texture_head):
         self.n = n
-        self.cabeza = Cabeza(n)
+        self.cabeza = Cabeza(n,texture_head)
         self.cola = [Cuerpo(0,0,n),Cuerpo(0,0,n),Cuerpo(0,0,n)]
         self.cuerpo = [[0,0],[1/self.n,0],[2/self.n,0],[3/self.n,0]]
         self.dx = -1*(1/n)
         self.dy = 0
+        self.theta = -1*mt.pi/2
         self.jugando = False
+        self.vida = True
 
-    def draw(self,pipeline):
-        self.cabeza.draw(pipeline)
+    def draw(self,pipeline1,pipeline2):
+        glUseProgram(pipeline2.shaderProgram)
+        self.cabeza.draw(pipeline2)
+        glUseProgram(pipeline1.shaderProgram)
         for i in range(len(self.cola)):
-            self.cola[i].draw(pipeline)
+            self.cola[i].draw(pipeline1)
             
     def update(self):
         for i in range(len(self.cola)-1,-1,-1):
@@ -158,7 +164,7 @@ class Snake:
         self.cabeza.pos_x += self.dx
         self.cabeza.pos_y += self.dy
         self.cuerpo[0] = [self.cabeza.pos_x,self.cabeza.pos_y]
-        self.cabeza.model.transform = tr.translate(self.cabeza.pos_x,self.cabeza.pos_y,0)
+        self.cabeza.model.transform = tr.matmul([tr.translate(self.cabeza.pos_x,self.cabeza.pos_y,0),tr.rotationZ(self.theta)])
         self.jugando = False
     
     def comer(self,manzana):
@@ -170,11 +176,13 @@ class Snake:
             self.cola.append(nuevo)
             manzana.update(self.cuerpo)
 
+    
 class Escenario:
-    def __init__(self,n):
+    def __init__(self,n,texture_go):
         # Basic Figures
         gpu_bordes_quad = es.toGPUShape(bs.createColorQuad(0,1,0)) #Verde fuerte
-        gpu_campo_quad = es.toGPUShape(bs.createColorQuad(0.3,1,0.3)) # Verde no tan fuerte
+        gpu_campo_quad = es.toGPUShape(bs.createColorQuad(0.3,0.3,0.3)) # Verde no tan fuerte
+        gpu_texture_go = es.toGPUShape(bs.createTextureQuad(texture_go),GL_REPEAT, GL_NEAREST)
 
         # creamos los bordes horizontales
         border_h = sg.SceneGraphNode('border_h')
@@ -206,16 +214,54 @@ class Escenario:
 
         # Fondo cuadriculado
         # cuadro 1
-        cuadro1 = sg.SceneGraphNode('cuadro1')
-        cuadro1.transform = tr.uniformScale(1)
-        cuadro1.childs += [gpu_campo_quad]
+        cuadro = sg.SceneGraphNode('cuadro')
+        cuadro.transform = tr.uniformScale(1)
+        cuadro.childs += [gpu_campo_quad]
 
-        #patron 1
         # Ensamblaje
         fondo = sg.SceneGraphNode('fondo')
         fondo.childs += [border_vu,border_hr,border_hl,border_vd]
+
+        fondo_gameover = sg.SceneGraphNode('fondo_gameover')
+        fondo_gameover.transform = tr.uniformScale(2)
+        fondo_gameover.childs += [gpu_texture_go]
+
         
+        # Patron
+        patron = sg.SceneGraphNode('patron_i')
+        i = -1 + (1/n)
+        while i < 1:
+            temp = sg.SceneGraphNode('quad'+str(i))
+            temp.transform = tr.matmul([tr.translate(i,0,0),tr.uniformScale(1/n)])
+            temp.childs += [cuadro]
+            patron.childs += [temp]
+            i += 2/n
+
+        i = 1 - (1/n)
+        cont = 1
+        while i > -1:
+            temp = sg.SceneGraphNode('patron'+str(i))
+            if cont%2 == 0:
+                temp.transform = tr.translate(0,i,0)
+            else:
+                temp.transform = tr.translate(1/n,i,0)
+            cont += 1
+            temp.childs += [patron]
+            fondo.childs += [temp]
+            i -= 1/n
+
         self.model = fondo
+        self.model1 = fondo_gameover
 
     def draw(self,pipeline):
+        glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(self.model,pipeline,'transform')
+    
+    def draw_go(self,pipeline):
+        glUseProgram(pipeline.shaderProgram)
+        sg.drawSceneGraphNode(self.model1,pipeline,'transform')
+    
+    def update(self,rotacion):
+        self.model1.transform = tr.matmul([tr.uniformScale(2),tr.rotationZ(rotacion)])
+
+    
