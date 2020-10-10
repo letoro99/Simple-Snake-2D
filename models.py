@@ -116,12 +116,12 @@ class Cabeza:
         
 
 class Cuerpo:
-    def __init__(self,x,y,n):
+    def __init__(self,x,y,n,textura):
         self.x = x
         self.y = y
         self.n = n
         # cuerpo
-        gpu_cuerpo_quad = es.toGPUShape(bs.createColorQuad(1,1,0))
+        gpu_cuerpo_quad = es.toGPUShape(bs.createTextureQuad(textura),GL_REPEAT,GL_NEAREST)
 
         cuerpo = sg.SceneGraphNode('cuerpo')
         cuerpo.transform = tr.matmul([tr.translate(self.x,self.y,0),tr.uniformScale(1/self.n)])
@@ -141,10 +141,10 @@ class Cuerpo:
         self.model.transform = tr.translate(posx,posy,0)
 
 class Snake:
-    def __init__(self,n,texture_head):
+    def __init__(self,n,texture_head,textura_body):
         self.n = n
         self.cabeza = Cabeza(n,texture_head)
-        self.cola = [Cuerpo(0,0,n),Cuerpo(0,0,n),Cuerpo(0,0,n)]
+        self.cola = [Cuerpo(0,0,n,textura_body),Cuerpo(0,0,n,textura_body),Cuerpo(0,0,n,textura_body)]
         self.cuerpo = [[0,0],[1/self.n,0],[2/self.n,0],[3/self.n,0]]
         self.dx = -1*(1/n)
         self.dy = 0
@@ -155,9 +155,8 @@ class Snake:
     def draw(self,pipeline1,pipeline2):
         glUseProgram(pipeline2.shaderProgram)
         self.cabeza.draw(pipeline2)
-        glUseProgram(pipeline1.shaderProgram)
         for i in range(len(self.cola)):
-            self.cola[i].draw(pipeline1)
+            self.cola[i].draw(pipeline2)
             
     def update(self):
         for i in range(len(self.cola)-1,-1,-1):
@@ -169,10 +168,10 @@ class Snake:
         self.cabeza.model.transform = tr.matmul([tr.translate(self.cabeza.pos_x,self.cabeza.pos_y,0),tr.rotationZ(self.theta)])
         self.jugando = False
     
-    def comer(self,manzana):
+    def comer(self,manzana,textura_body):
         error = 0.00001 
         if self.cabeza.pos_x - error <= manzana.fruta.pos_x <= self.cabeza.pos_x + error and self.cabeza.pos_y - error <= manzana.fruta.pos_y <= self.cabeza.pos_y + error:
-            nuevo = Cuerpo(0,0,self.n)
+            nuevo = Cuerpo(0,0,self.n,textura_body)
             nuevo.posicionar(self.cuerpo[len(self.cuerpo)-1][0],self.cuerpo[len(self.cuerpo)-1][1])
             self.cuerpo.append([self.cuerpo[len(self.cuerpo)-1][0],self.cuerpo[len(self.cuerpo)-1][1]])
             self.cola.append(nuevo)

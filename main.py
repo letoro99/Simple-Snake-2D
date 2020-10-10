@@ -41,7 +41,7 @@ if __name__ == '__main__':
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
     fondo = Escenario(n,'img/game_over.png')
-    snake = Snake(n,'img/serpiente.png')
+    snake = Snake(n,'img/serpiente.png','img/cuerpo_serpiente.png')
     manzana = CreadorApple(n)
     manzana.randomPos()
 
@@ -62,7 +62,7 @@ if __name__ == '__main__':
         if dt > vel and snake.cabeza.vida == True:
             snake.update()
             snake.cabeza.colision(snake.cuerpo,snake,manzana)
-            snake.comer(manzana)
+            snake.comer(manzana,'img/cuerpo_serpiente.png')
             print(manzana.fruta.pos_x,manzana.fruta.pos_y)
             dt = 0
             t0 = ti
@@ -77,7 +77,7 @@ if __name__ == '__main__':
             fondo.draw(pipeline_color)
             snake.draw(pipeline_color,pipeline_texture)
             manzana.draw(pipeline_color)
-            
+
             # Once the render is done, buffers are swapped, showing only the complete scene.
             glfw.swap_buffers(window)
         
