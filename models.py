@@ -7,6 +7,7 @@ import scene_graph as sg
 import easy_shaders as es
 import random as rd
 import math as mt
+import numpy as np
 
 from OpenGL.GL import glClearColor
 from typing import List
@@ -16,7 +17,7 @@ class Apple:
     def __init__(self,n):
         self.n = n
         # basic figures
-        gpu_body_quad = es.toGPUShape(bs.createColorQuad(0,0,1))
+        gpu_body_quad = es.toGPUShape(bs.createColorQuad(1,0.1,0.1))
         gpu_rama_quad = es.toGPUShape(bs.createColorQuad(0.8,0.5,0.5))
 
         # Creamos el cuerpo
@@ -38,8 +39,8 @@ class Apple:
         transform_apple.childs += [apple]
 
         self.model = transform_apple
-        self.pos_x = mt.trunc(rd.random()*rd.randint(-1,0)*10)/10
-        self.pos_y = mt.trunc(rd.random()*rd.randint(-1,1)*10)/10
+        self.pos_x = 0
+        self.pos_y = 0
     
     def draw(self,pipeline):
         glUseProgram(pipeline.shaderProgram)
@@ -48,28 +49,29 @@ class Apple:
 
 class CreadorApple():
     def __init__(self,n):
-        self.comidas = 1
+        self.creadas = 0
         self.fruta = Apple(n)
+        self.rango = np.arange(-1+(1/n),1-(1/n),1/n)
+    
+    def randomPos(self):
+        self.fruta.pos_x = self.rango[rd.randint(0,len(self.rango)-1)]
+        self.fruta.pos_y = self.rango[rd.randint(0,len(self.rango)-1)]
 
     def draw(self,pipeline):
         self.fruta.draw(pipeline)
 
     def update(self,lista):
-        self.comidas += 1
-        print(self.comidas)
+        self.creadas += 1
+        print(self.creadas)
         test = False
         error = 0.00001
-        self.fruta.pos_x = mt.trunc(rd.random()*rd.randint(-1,1)*10)/10
-        self.fruta.pos_y = mt.trunc(rd.random()*rd.randint(-1,1)*10)/10
         while test == False:
-            self.fruta.pos_x = mt.trunc(rd.random()*rd.randint(-1,1)*10)/10
-            self.fruta.pos_y = mt.trunc(rd.random()*rd.randint(-1,1)*10)/10
+            self.randomPos()
             test = True
             for i in range(len(lista)):
                 if self.fruta.pos_x - error <= lista[i][0] <= self.fruta.pos_x + error and self.fruta.pos_y - error <= lista[i][1] <=  self.fruta.pos_y + error:
                     test = False
                     break
-            print(self.fruta.pos_x,self.fruta.pos_y)
 
 class Cabeza:
     def __init__(self,n,texture_head):
@@ -119,7 +121,7 @@ class Cuerpo:
         self.y = y
         self.n = n
         # cuerpo
-        gpu_cuerpo_quad = es.toGPUShape(bs.createColorQuad(0.8,0.8,0.2))
+        gpu_cuerpo_quad = es.toGPUShape(bs.createColorQuad(1,1,0))
 
         cuerpo = sg.SceneGraphNode('cuerpo')
         cuerpo.transform = tr.matmul([tr.translate(self.x,self.y,0),tr.uniformScale(1/self.n)])
@@ -181,7 +183,7 @@ class Escenario:
     def __init__(self,n,texture_go):
         # Basic Figures
         gpu_bordes_quad = es.toGPUShape(bs.createColorQuad(0,1,0)) #Verde fuerte
-        gpu_campo_quad = es.toGPUShape(bs.createColorQuad(0.3,0.3,0.3)) # Verde no tan fuerte
+        gpu_campo_quad = es.toGPUShape(bs.createColorQuad(0.3,0.3,1)) # Verde no tan fuerte
         gpu_texture_go = es.toGPUShape(bs.createTextureQuad(texture_go),GL_REPEAT, GL_NEAREST)
 
         # creamos los bordes horizontales
@@ -230,7 +232,7 @@ class Escenario:
         # Patron
         patron = sg.SceneGraphNode('patron_i')
         i = -1 + (1/n)
-        while i < 1:
+        while i < 1-(1/n):
             temp = sg.SceneGraphNode('quad'+str(i))
             temp.transform = tr.matmul([tr.translate(i,0,0),tr.uniformScale(1/n)])
             temp.childs += [cuadro]
@@ -239,7 +241,7 @@ class Escenario:
 
         i = 1 - (1/n)
         cont = 1
-        while i > -1:
+        while i > -1+(1/n):
             temp = sg.SceneGraphNode('patron'+str(i))
             if cont%2 == 0:
                 temp.transform = tr.translate(0,i,0)

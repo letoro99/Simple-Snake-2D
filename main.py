@@ -9,14 +9,14 @@ from control import Controller
 
 if __name__ == '__main__':
     print(sys.argv)
-    n = 10
+    n = int(sys.argv[1])
 
     # Initialize glfw
     if not glfw.init():
         sys.exit()
 
-    width = 800
-    height = 600
+    width = 1200
+    height = 800
 
     window = glfw.create_window(width, height, "Snake!", None, None)
 
@@ -43,28 +43,29 @@ if __name__ == '__main__':
     fondo = Escenario(n,'img/game_over.png')
     snake = Snake(n,'img/serpiente.png')
     manzana = CreadorApple(n)
+    manzana.randomPos()
 
     controlador.set_model(snake)
     controlador.set_apple(manzana)
     controlador.set_dif(1/n)
+    print(manzana.fruta.pos_x,manzana.fruta.pos_y)
     t0 = 0
     dt = 0
     rot = 0
     vel = 0.1
-
 
     while not glfw.window_should_close(window):
         
         ti = glfw.get_time()
         dt = ti - t0
 
-        if dt > vel:
+        if dt > vel and snake.cabeza.vida == True:
             snake.update()
             snake.cabeza.colision(snake.cuerpo,snake,manzana)
             snake.comer(manzana)
+            print(manzana.fruta.pos_x,manzana.fruta.pos_y)
             dt = 0
             t0 = ti
-
 
         # Using GLFW to check for input events
         glfw.poll_events()
@@ -76,7 +77,7 @@ if __name__ == '__main__':
             fondo.draw(pipeline_color)
             snake.draw(pipeline_color,pipeline_texture)
             manzana.draw(pipeline_color)
-
+            
             # Once the render is done, buffers are swapped, showing only the complete scene.
             glfw.swap_buffers(window)
         
