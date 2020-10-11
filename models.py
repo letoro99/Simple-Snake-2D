@@ -108,7 +108,7 @@ class Cabeza:
             self.gameOver()
         if 1 - error < self.pos_y < 1 + error or -1 -error < self.pos_y < -1 +error:
             self.gameOver()
-        for i in range(1,snake.largo):
+        for i in range(1,snake.largo+1):
             if self.pos_x - error <= lista[i][0] <= self.pos_x + error and self.pos_y - error <= lista[i][1] <= self.pos_y + error:
                 self.gameOver()
         
@@ -141,10 +141,10 @@ class Cuerpo:
 class Snake:
     def __init__(self,n,texture_head,textura_body):
         self.n = n
-        self.largo = 2
+        self.largo = 3
         self.cabeza = Cabeza(n,texture_head)
         self.cola = [Cuerpo(0,0,n,textura_body),Cuerpo(0,0,n,textura_body),Cuerpo(0,0,n,textura_body)]
-        self.cuerpo = np.zeros((int(n-1)*int(n-1),2))
+        self.cuerpo = np.zeros((int(2*n-1)*int(2*n-1),2))
         for i in range(4):
             self.cuerpo[i] = [i/self.n,0]
         self.dx = -1*(1/n)
@@ -174,12 +174,11 @@ class Snake:
         error = 0.00001 
         if self.cabeza.pos_x - error <= manzana.fruta.pos_x <= self.cabeza.pos_x + error and self.cabeza.pos_y - error <= manzana.fruta.pos_y <= self.cabeza.pos_y + error:
             nuevo = Cuerpo(0,0,self.n,textura_body)
-            nuevo.posicionar(self.cuerpo[len(self.cuerpo)-1][0],self.cuerpo[len(self.cuerpo)-1][1])
-            self.cuerpo[self.largo] = [self.cuerpo[len(self.cuerpo)-1][0],self.cuerpo[len(self.cuerpo)-1][1]]
+            self.largo += 1
+            nuevo.posicionar(self.cuerpo[self.largo-1][0],self.cuerpo[self.largo-1][1])
+            self.cuerpo[self.largo] = [self.cuerpo[self.largo-1][0],self.cuerpo[self.largo-1][1]]
             self.cola.append(nuevo)
             manzana.update(self.cuerpo)
-            self.largo += 1
-
 
     
 class Escenario:

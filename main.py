@@ -49,6 +49,7 @@ if __name__ == '__main__':
     snake = Snake(n,'img/serpiente.png','img/cuerpo_serpiente.png')
     manzana = CreadorApple(n)
     manzana.randomPos()
+    manzana.update(snake.cuerpo)
 
     controlador.set_model(snake)
     controlador.set_apple(manzana)
@@ -75,7 +76,7 @@ if __name__ == '__main__':
 
         glClear(GL_COLOR_BUFFER_BIT)
     
-        if snake.largo == (2*n-n)**2-1:
+        if snake.largo == (2*n-1)*(2*n-1)-2:
             glClearColor(0,0,0,0)
             fondo.draw_go(pipeline_texture,2)
             glfw.swap_buffers(window)
