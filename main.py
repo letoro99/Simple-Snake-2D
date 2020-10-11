@@ -9,7 +9,12 @@ from control import Controller
 
 if __name__ == '__main__':
     print(sys.argv)
-    n = int(sys.argv[1])/2
+    n = int(sys.argv[1])
+    if n%2==0:
+        n = n/2
+    else:
+        n = (n+1)/2
+    print(n)
 
     # Initialize glfw
     if not glfw.init():
@@ -40,7 +45,7 @@ if __name__ == '__main__':
     # Our shapes here are always fully painted
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
 
-    fondo = Escenario(n,'img/game_over.png')
+    fondo = Escenario(n,'img/game_over.png','img/win.png')
     snake = Snake(n,'img/serpiente.png','img/cuerpo_serpiente.png')
     manzana = CreadorApple(n)
     manzana.randomPos()
@@ -48,11 +53,10 @@ if __name__ == '__main__':
     controlador.set_model(snake)
     controlador.set_apple(manzana)
     controlador.set_dif(1/n)
-    print(manzana.fruta.pos_x,manzana.fruta.pos_y)
     t0 = 0
     dt = 0
     rot = 0
-    vel = 0.1
+    vel = 1/(2*n)
 
     while not glfw.window_should_close(window):
         
@@ -63,7 +67,6 @@ if __name__ == '__main__':
             snake.update()
             snake.cabeza.colision(snake.cuerpo,snake,manzana)
             snake.comer(manzana,'img/cuerpo_serpiente.png')
-            print(manzana.fruta.pos_x,manzana.fruta.pos_y)
             dt = 0
             t0 = ti
 
@@ -71,9 +74,14 @@ if __name__ == '__main__':
         glfw.poll_events()
 
         glClear(GL_COLOR_BUFFER_BIT)
+    
+        if snake.largo == (2*n-n)**2-1:
+            glClearColor(0,0,0,0)
+            fondo.draw_go(pipeline_texture,2)
+            glfw.swap_buffers(window)
 
         # Dibujamos
-        if snake.cabeza.vida == True:
+        elif snake.cabeza.vida == True:
             fondo.draw(pipeline_color)
             snake.draw(pipeline_color,pipeline_texture)
             manzana.draw(pipeline_color)
@@ -86,8 +94,8 @@ if __name__ == '__main__':
             if rot < (mt.pi/15):
                 fondo.update(rot)
                 rot += 0.00008
-            fondo.draw_go(pipeline_texture)
-             # Once the render is done, buffers are swapped, showing only the complete scene.
+            fondo.draw_go(pipeline_texture,1)
+            # Once the render is done, buffers are swapped, showing only the complete scene.
             glfw.swap_buffers(window)
 
     glfw.terminate()

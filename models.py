@@ -49,7 +49,6 @@ class Apple:
 
 class CreadorApple():
     def __init__(self,n):
-        self.creadas = 0
         self.fruta = Apple(n)
         self.rango = np.arange(-1+(1/n),1-(1/n),1/n)
     
@@ -61,8 +60,6 @@ class CreadorApple():
         self.fruta.draw(pipeline)
 
     def update(self,lista):
-        self.creadas += 1
-        print(self.creadas)
         test = False
         error = 0.00001
         while test == False:
@@ -72,6 +69,7 @@ class CreadorApple():
                 if self.fruta.pos_x - error <= lista[i][0] <= self.fruta.pos_x + error and self.fruta.pos_y - error <= lista[i][1] <=  self.fruta.pos_y + error:
                     test = False
                     break
+        print(self.fruta.pos_x,self.fruta.pos_y)
 
 class Cabeza:
     def __init__(self,n,texture_head):
@@ -110,7 +108,7 @@ class Cabeza:
             self.gameOver()
         if 1 - error < self.pos_y < 1 + error or -1 -error < self.pos_y < -1 +error:
             self.gameOver()
-        for i in range(1,len(lista)):
+        for i in range(1,snake.largo):
             if self.pos_x - error <= lista[i][0] <= self.pos_x + error and self.pos_y - error <= lista[i][1] <= self.pos_y + error:
                 self.gameOver()
         
@@ -143,9 +141,12 @@ class Cuerpo:
 class Snake:
     def __init__(self,n,texture_head,textura_body):
         self.n = n
+        self.largo = 2
         self.cabeza = Cabeza(n,texture_head)
         self.cola = [Cuerpo(0,0,n,textura_body),Cuerpo(0,0,n,textura_body),Cuerpo(0,0,n,textura_body)]
-        self.cuerpo = [[0,0],[1/self.n,0],[2/self.n,0],[3/self.n,0]]
+        self.cuerpo = np.zeros((int(n-1)*int(n-1),2))
+        for i in range(4):
+            self.cuerpo[i] = [i/self.n,0]
         self.dx = -1*(1/n)
         self.dy = 0
         self.theta = -1*mt.pi/2
@@ -167,23 +168,27 @@ class Snake:
         self.cuerpo[0] = [self.cabeza.pos_x,self.cabeza.pos_y]
         self.cabeza.model.transform = tr.matmul([tr.translate(self.cabeza.pos_x,self.cabeza.pos_y,0),tr.rotationZ(self.theta)])
         self.jugando = False
+        print(self.cabeza.pos_x,self.cabeza.pos_y)
     
     def comer(self,manzana,textura_body):
         error = 0.00001 
         if self.cabeza.pos_x - error <= manzana.fruta.pos_x <= self.cabeza.pos_x + error and self.cabeza.pos_y - error <= manzana.fruta.pos_y <= self.cabeza.pos_y + error:
             nuevo = Cuerpo(0,0,self.n,textura_body)
             nuevo.posicionar(self.cuerpo[len(self.cuerpo)-1][0],self.cuerpo[len(self.cuerpo)-1][1])
-            self.cuerpo.append([self.cuerpo[len(self.cuerpo)-1][0],self.cuerpo[len(self.cuerpo)-1][1]])
+            self.cuerpo[self.largo] = [self.cuerpo[len(self.cuerpo)-1][0],self.cuerpo[len(self.cuerpo)-1][1]]
             self.cola.append(nuevo)
             manzana.update(self.cuerpo)
+            self.largo += 1
+
 
     
 class Escenario:
-    def __init__(self,n,texture_go):
+    def __init__(self,n,texture_go,texture_win):
         # Basic Figures
         gpu_bordes_quad = es.toGPUShape(bs.createColorQuad(0,1,0)) #Verde fuerte
         gpu_campo_quad = es.toGPUShape(bs.createColorQuad(0.65,1,0.65)) # Verde no tan fuerte
         gpu_texture_go = es.toGPUShape(bs.createTextureQuad(texture_go),GL_REPEAT, GL_NEAREST)
+        gpu_texture_win = es.toGPUShape(bs.createTextureQuad(texture_win),GL_REPEAT, GL_NEAREST)
 
         # creamos los bordes horizontales
         border_h = sg.SceneGraphNode('border_h')
@@ -223,6 +228,10 @@ class Escenario:
         fondo_gameover.transform = tr.uniformScale(1)
         fondo_gameover.childs += [gpu_texture_go]
 
+        fondo_win = sg.SceneGraphNode('fondo_win')
+        fondo_win.transform = tr.uniformScale(1)
+        fondo_win.childs += [gpu_texture_win]
+
         # Ensamblaje
         fondo = sg.SceneGraphNode('fondo')
 
@@ -253,14 +262,19 @@ class Escenario:
 
         self.model = fondo
         self.model1 = fondo_gameover
+        self.model2 = fondo_win
 
     def draw(self,pipeline):
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(self.model,pipeline,'transform')
     
-    def draw_go(self,pipeline):
-        glUseProgram(pipeline.shaderProgram)
-        sg.drawSceneGraphNode(self.model1,pipeline,'transform')
+    def draw_go(self,pipeline,x):
+        if x == 1:
+            glUseProgram(pipeline.shaderProgram)
+            sg.drawSceneGraphNode(self.model1,pipeline,'transform')
+        if x == 2:
+            glUseProgram(pipeline.shaderProgram)
+            sg.drawSceneGraphNode(self.model2,pipeline,'transform')
     
     def update(self,rotacion):
         self.model1.transform = tr.matmul([tr.uniformScale(2),tr.rotationZ(rotacion),tr.translate(rotacion/100,0,0)])
