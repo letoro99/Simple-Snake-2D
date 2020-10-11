@@ -182,7 +182,7 @@ class Escenario:
     def __init__(self,n,texture_go):
         # Basic Figures
         gpu_bordes_quad = es.toGPUShape(bs.createColorQuad(0,1,0)) #Verde fuerte
-        gpu_campo_quad = es.toGPUShape(bs.createColorQuad(0.3,0.3,1)) # Verde no tan fuerte
+        gpu_campo_quad = es.toGPUShape(bs.createColorQuad(0.65,1,0.65)) # Verde no tan fuerte
         gpu_texture_go = es.toGPUShape(bs.createTextureQuad(texture_go),GL_REPEAT, GL_NEAREST)
 
         # creamos los bordes horizontales
@@ -219,19 +219,17 @@ class Escenario:
         cuadro.transform = tr.uniformScale(1)
         cuadro.childs += [gpu_campo_quad]
 
-        # Ensamblaje
-        fondo = sg.SceneGraphNode('fondo')
-        fondo.childs += [border_vu,border_hr,border_hl,border_vd]
-
         fondo_gameover = sg.SceneGraphNode('fondo_gameover')
-        fondo_gameover.transform = tr.uniformScale(2)
+        fondo_gameover.transform = tr.uniformScale(1)
         fondo_gameover.childs += [gpu_texture_go]
 
-        
+        # Ensamblaje
+        fondo = sg.SceneGraphNode('fondo')
+
         # Patron
         patron = sg.SceneGraphNode('patron_i')
         i = -1 + (1/n)
-        while i < 1-(1/n):
+        while i < 1:
             temp = sg.SceneGraphNode('quad'+str(i))
             temp.transform = tr.matmul([tr.translate(i,0,0),tr.uniformScale(1/n)])
             temp.childs += [cuadro]
@@ -240,7 +238,7 @@ class Escenario:
 
         i = 1 - (1/n)
         cont = 1
-        while i > -1+(1/n):
+        while i > -1:
             temp = sg.SceneGraphNode('patron'+str(i))
             if cont%2 == 0:
                 temp.transform = tr.translate(0,i,0)
@@ -250,6 +248,8 @@ class Escenario:
             temp.childs += [patron]
             fondo.childs += [temp]
             i -= 1/n
+
+        fondo.childs += [border_vu,border_hr,border_hl,border_vd]
 
         self.model = fondo
         self.model1 = fondo_gameover
@@ -263,6 +263,6 @@ class Escenario:
         sg.drawSceneGraphNode(self.model1,pipeline,'transform')
     
     def update(self,rotacion):
-        self.model1.transform = tr.matmul([tr.uniformScale(2),tr.rotationZ(rotacion)])
+        self.model1.transform = tr.matmul([tr.uniformScale(2),tr.rotationZ(rotacion),tr.translate(rotacion/100,0,0)])
 
     

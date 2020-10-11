@@ -9,14 +9,14 @@ from control import Controller
 
 if __name__ == '__main__':
     print(sys.argv)
-    n = int(sys.argv[1])
+    n = int(sys.argv[1])/2
 
     # Initialize glfw
     if not glfw.init():
         sys.exit()
 
-    width = 1200
-    height = 800
+    width = 800
+    height = 600
 
     window = glfw.create_window(width, height, "Snake!", None, None)
 
@@ -83,9 +83,9 @@ if __name__ == '__main__':
         
         else:
             glClearColor(0, 0, 0, 0)
-            if rot < (mt.pi/8):
+            if rot < (mt.pi/15):
                 fondo.update(rot)
-                rot += 0.0001
+                rot += 0.00008
             fondo.draw_go(pipeline_texture)
              # Once the render is done, buffers are swapped, showing only the complete scene.
             glfw.swap_buffers(window)
