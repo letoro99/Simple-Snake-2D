@@ -1,4 +1,4 @@
-"Codigo para el control de snake!"
+# Condigo para controlar snake version final
 
 from models import *
 import glfw

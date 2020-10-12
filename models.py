@@ -1,5 +1,5 @@
-# Modelos del Snake
-# Contiene :
+# Modelos del Snake version final
+# Contiene : Creador manzana, snake y escenrario como nodos principales.
 from OpenGL.GL import *
 import transformations as tr
 import basic_shapes as bs
@@ -13,7 +13,7 @@ from OpenGL.GL import glClearColor
 from typing import List
 
 
-class Apple:
+class Apple: # crea la figura de la manzana
     def __init__(self,n):
         self.n = n
         # basic figures
@@ -47,7 +47,7 @@ class Apple:
         self.model.transform = tr.translate(self.pos_x,self.pos_y,0)
         sg.drawSceneGraphNode(self.model,pipeline,'transform')
 
-class CreadorApple():
+class CreadorApple(): # Encargado de la posicion y la actualizacion de la posicion de la manzana
     def __init__(self,n):
         self.fruta = Apple(n)
         self.rango = np.arange(-1+(1/n),1-(1/n),1/n)
@@ -59,7 +59,7 @@ class CreadorApple():
     def draw(self,pipeline):
         self.fruta.draw(pipeline)
 
-    def update(self,lista):
+    def update(self,lista): # actualiza la posicion de la manzana sin que esta choque con Snake
         test = False
         error = 0.00001
         while test == False:
@@ -71,7 +71,7 @@ class CreadorApple():
                     break
         print(self.fruta.pos_x,self.fruta.pos_y)
 
-class Cabeza:
+class Cabeza: # Objeto que movera el jugador, se vera si choca o come la manzana
     def __init__(self,n,texture_head):
         self.n = n
         # basic figures
@@ -102,18 +102,29 @@ class Cabeza:
     def gameOver(self):
         self.vida = False
 
-    def colision(self,lista,snake,manzana):
+    def colision(self,lista,snake,manzana,textura_body): # Revisa si la cabeza de la snake esta encima de el borde, su cuerpo o la manzana
         error = 0.00001
         if 1 - error < self.pos_x < 1  + error or -1 - error < self.pos_x < -1 +error:
             self.gameOver()
+
         if 1 - error < self.pos_y < 1 + error or -1 -error < self.pos_y < -1 +error:
             self.gameOver()
+            
         for i in range(1,snake.largo+1):
             if self.pos_x - error <= lista[i][0] <= self.pos_x + error and self.pos_y - error <= lista[i][1] <= self.pos_y + error:
                 self.gameOver()
+
+            if self.pos_x - error <= manzana.fruta.pos_x <= self.pos_x + error and self.pos_y - error <= manzana.fruta.pos_y <= self.pos_y + error:
+                snake.largo +=1
+                nuevo = Cuerpo(0,0,self.n,textura_body)
+                nuevo.posicionar(snake.cuerpo[snake.largo-1][0],snake.cuerpo[snake.largo-1][1])
+                snake.cuerpo[snake.largo] = [snake.cuerpo[snake.largo-1][0],snake.cuerpo[snake.largo-1][1]]
+                snake.cola.append(nuevo)
+                manzana.update(snake.cuerpo)
+                
         
 
-class Cuerpo:
+class Cuerpo: # Cuerpo del jugador en la que estara en un lista para saber la posicion del cuerpo de la serpiente
     def __init__(self,x,y,n,textura):
         self.x = x
         self.y = y
@@ -134,11 +145,11 @@ class Cuerpo:
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(self.model,pipeline,'transform')
 
-    def posicionar(self,posx,posy):
+    def posicionar(self,posx,posy): # reubica al cuerpo
         self.x,self.y = posx,posy
         self.model.transform = tr.translate(posx,posy,0)
 
-class Snake:
+class Snake: # conjunto de la cabeza y el cuepro de la snake
     def __init__(self,n,texture_head,textura_body):
         self.n = n
         self.largo = 3
@@ -159,7 +170,7 @@ class Snake:
         for i in range(len(self.cola)):
             self.cola[i].draw(pipeline2)
             
-    def update(self):
+    def update(self): # actualiza la posicion de la cabeza y el cuerpo de la serpiente
         for i in range(len(self.cola)-1,-1,-1):
             self.cola[i].posicionar(self.cuerpo[i][0],self.cuerpo[i][1])
             self.cuerpo[i+1] = [self.cuerpo[i][0],self.cuerpo[i][1]]
@@ -169,19 +180,9 @@ class Snake:
         self.cabeza.model.transform = tr.matmul([tr.translate(self.cabeza.pos_x,self.cabeza.pos_y,0),tr.rotationZ(self.theta)])
         self.jugando = False
         print(self.cabeza.pos_x,self.cabeza.pos_y)
-    
-    def comer(self,manzana,textura_body):
-        error = 0.00001 
-        if self.cabeza.pos_x - error <= manzana.fruta.pos_x <= self.cabeza.pos_x + error and self.cabeza.pos_y - error <= manzana.fruta.pos_y <= self.cabeza.pos_y + error:
-            nuevo = Cuerpo(0,0,self.n,textura_body)
-            self.largo += 1
-            nuevo.posicionar(self.cuerpo[self.largo-1][0],self.cuerpo[self.largo-1][1])
-            self.cuerpo[self.largo] = [self.cuerpo[self.largo-1][0],self.cuerpo[self.largo-1][1]]
-            self.cola.append(nuevo)
-            manzana.update(self.cuerpo)
 
     
-class Escenario:
+class Escenario: # Eso, el campo donde se jugara
     def __init__(self,n,texture_go,texture_win):
         # Basic Figures
         gpu_bordes_quad = es.toGPUShape(bs.createColorQuad(0,1,0)) #Verde fuerte
@@ -237,7 +238,7 @@ class Escenario:
         # Patron
         patron = sg.SceneGraphNode('patron_i')
         i = -1 + (1/n)
-        while i < 1:
+        while i < 1: # crea el patron de fondo
             temp = sg.SceneGraphNode('quad'+str(i))
             temp.transform = tr.matmul([tr.translate(i,0,0),tr.uniformScale(1/n)])
             temp.childs += [cuadro]
@@ -246,7 +247,7 @@ class Escenario:
 
         i = 1 - (1/n)
         cont = 1
-        while i > -1:
+        while i > -1: # Ubica el patron de fondo, creando los necesarios para cubrir el campo
             temp = sg.SceneGraphNode('patron'+str(i))
             if cont%2 == 0:
                 temp.transform = tr.translate(0,i,0)
@@ -263,11 +264,11 @@ class Escenario:
         self.model1 = fondo_gameover
         self.model2 = fondo_win
 
-    def draw(self,pipeline):
+    def draw(self,pipeline): # dibuja el campo
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(self.model,pipeline,'transform')
     
-    def draw_go(self,pipeline,x):
+    def draw_go(self,pipeline,x): # Dibuja la pantalla de textura
         if x == 1:
             glUseProgram(pipeline.shaderProgram)
             sg.drawSceneGraphNode(self.model1,pipeline,'transform')
@@ -275,7 +276,7 @@ class Escenario:
             glUseProgram(pipeline.shaderProgram)
             sg.drawSceneGraphNode(self.model2,pipeline,'transform')
     
-    def update(self,rotacion):
+    def update(self,rotacion): # Animacion de la pantalla de perdida
         self.model1.transform = tr.matmul([tr.uniformScale(2),tr.rotationZ(rotacion),tr.translate(rotacion/100,0,0)])
 
     
