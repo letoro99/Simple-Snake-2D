@@ -1,5 +1,7 @@
 # Snake 2D
 
+Las instrucciones de uso estarán en el pdf en la carpeta "Informe y video".
+
 Debe tener:
 - Python 3.7 (o superior) 
 - Numpy 
